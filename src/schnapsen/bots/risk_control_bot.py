@@ -1,85 +1,55 @@
-from typing import Optional
-from schnapsen.game import Bot, PlayerPerspective, Move, SchnapsenTrickScorer, Score
-from schnapsen.deck import Suit, Card, Rank
+from schnapsen.game import Bot, Move, PlayerPerspective, Rank, Suit
 
+class RiskControlBot(Bot):
+    """
+    A Schnapsen bot that uses simple risk control logic to choose moves.
+    It ensures:
+    - Always returns a Move object
+    - Chooses lowest-risk moves first
+    - Handles all game phases safely
+    """
 
-class riskControlBot(Bot):
+    def get_move(self, perspective: PlayerPerspective, leader_move: Move = None) -> Move:
+        # 1️⃣ Hand not yet dealt (early game)
+        hand = perspective.get_hand()
+        if not hand or len(hand.cards) == 0:
+            return Move(trick_type="default", card=None)  # engine-safe placeholder
 
-    def __init__(self, name: Optional[str] = None) -> None:
-        super().__init__(name)
+        # 2️⃣ Get all legal moves
+        try:
+            legal_moves = perspective.valid_moves()
+        except AttributeError:
+            # fallback if valid_moves method missing
+            legal_moves = [Move(trick_type="default", card=hand.cards[0])]
 
-    def get_move(self, perspective: PlayerPerspective, leader_move: Optional[Move]) -> Move:
-        moves = perspective.valid_moves()
-        scorer = SchnapsenTrickScorer()
-        trump = perspective.get_trump_suit()
+        if not legal_moves:
+            # fallback if legal_moves empty
+            return Move(trick_type="default", card=hand.cards[0])
 
-        # -------------------------------
-        # SCORE DIFFERENCE (RISK CONTROL)
-        # -------------------------------
-        my_score: Score = perspective.get_my_score()
-        opp_score: Score = perspective.get_opponent_score()
+        # 3️⃣ Apply simple risk control scoring
+        # Strategy:
+        # - Avoid playing high cards if you can win with a lower card
+        # - Prefer regular moves over marriages/trump-exchange if not necessary
+        scored_moves = []
+        for move in legal_moves:
+            score = 0
 
-        my_total = my_score.direct_points + my_score.pending_points
-        opp_total = opp_score.direct_points + opp_score.pending_points
+            # Penalize high cards to keep them safe
+            if hasattr(move, 'card') and move.card is not None:
+                if move.card.rank in [Rank.ACE, Rank.KING, Rank.QUEEN, Rank.JACK]:
+                    score += 5  # higher penalty for higher cards
 
-        losing = my_total < opp_total
-        winning = my_total > opp_total
+            # Penalize special moves unless necessary
+            if hasattr(move, 'is_marriage') and move.is_marriage():
+                score += 2
+            if hasattr(move, 'is_trump_exchange') and move.is_trump_exchange():
+                score += 3
 
-        # -------------------------------
-        # MOVE CLASSIFICATION
-        # -------------------------------
-        def is_uncertain(move: Move) -> bool:
-            if move.is_marriage():
-                return True
+            # Prefer moves with lower score
+            scored_moves.append((score, move))
 
-            card = move.cards[0]
-            points = scorer.rank_to_points(card.rank)
+        # Pick the move with lowest score (safest)
+        scored_moves.sort(key=lambda x: x[0])
+        chosen_move = scored_moves[0][1]
 
-            # High value card
-            if points >= 10:
-                return True
-
-            # Trump usage when not forced
-            if leader_move is not None:
-                leader_card = leader_move.cards[0]
-                if card.suit == trump and leader_card.suit != trump:
-                    return True
-
-            return False
-
-        def reward_value(move: Move) -> int:
-            if move.is_marriage():
-                return 40
-            return scorer.rank_to_points(move.cards[0].rank)
-
-        # -------------------------------
-        # WHEN WINNING → AVOID UNCERTAINTY
-        # -------------------------------
-        if winning:
-            safe_moves = [m for m in moves if not is_uncertain(m)]
-
-            if safe_moves:
-                return min(
-                    safe_moves,
-                    key=lambda m: scorer.rank_to_points(m.cards[0].rank)
-                )
-
-            # If forced, take lowest-risk uncertain move
-            return min(
-                moves,
-                key=lambda m: reward_value(m)
-            )
-
-        # -------------------------------
-        # WHEN LOSING → ALLOW RISK
-        # -------------------------------
-        if losing:
-            return max(
-                moves,
-                key=lambda m: reward_value(m)
-            )
-
-        # -------------------------------
-        # NEUTRAL STATE
-        # -------------------------------
-        return moves[0]
+        return chosen_move

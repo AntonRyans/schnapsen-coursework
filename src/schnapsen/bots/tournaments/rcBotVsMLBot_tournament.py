@@ -1,50 +1,61 @@
+"""
+Tournament: RiskControlBot vs MLPlayingBot
+Runs 10 games and prints results.
+"""
+
+import random
 from pathlib import Path
+from schnapsen.game import SchnapsenGamePlayEngine
 
-from schnapsen.game import GamePlayEngine, SchnapsenDeckGenerator
-from schnapsen.bots.risk_control_bot import HeuristicBot
+# ---------------- IMPORT YOUR BOTS ----------------
+from schnapsen.bots.risk_control_bot import RiskControlBot
 from schnapsen.bots.ml_bot import MLPlayingBot
+# --------------------------------------------------
 
+# ---------------- CONFIG ----------------
+SEED = 42
+NUM_GAMES = 10000
+MODEL_PATH = Path(r"C:\Users\anton\Documents\GitHub\schnapsen-coursework\ML_models\ml_vs_bully_model.joblib")
+# ---------------------------------------
 
-def run_tournament(
-    n_games: int = 100,
-):
-    engine = GamePlayEngine()
-    deck_generator = SchnapsenDeckGenerator()
-
-    # Instantiate bots
-    heuristic_bot = HeuristicBot(name="HeuristicBot")
-
-    model_path = Path("ML_models/test_model")  # adjust if needed
-    ml_bot = MLPlayingBot(model_location=model_path, name="MLBot")
-
-    wins = {
-        heuristic_bot.name: 0,
-        ml_bot.name: 0
-    }
-
-    for i in range(n_games):
-        # Alternate leader
-        if i % 2 == 0:
-            bot1, bot2 = heuristic_bot, ml_bot
-        else:
-            bot1, bot2 = ml_bot, heuristic_bot
-
-        winner, _ = engine.play_game(
-            bot1=bot1,
-            bot2=bot2,
-            deck_generator=deck_generator
+def run_tournament(n_games: int = NUM_GAMES) -> None:
+    # Ensure ML model exists
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(
+            f"ML model not found at {MODEL_PATH}. Please train your MLPlayingBot model first."
         )
 
-        wins[winner.name] += 1
-        print(f"Game {i + 1}/{n_games} → Winner: {winner.name}")
+    rng = random.Random(SEED)
+    engine = SchnapsenGamePlayEngine()
 
-    # Final results
-    print("\n==============================")
-    print("        TOURNAMENT RESULTS    ")
-    print("==============================")
-    for bot_name, count in wins.items():
-        print(f"{bot_name}: {count} wins ({count / n_games:.2%})")
+    # Initialize bots
+    rc_bot = RiskControlBot()
+    ml_bot = MLPlayingBot(model_location=MODEL_PATH)
 
+    # Ensure get_name exists for both bots
+    for bot in [rc_bot, ml_bot]:
+        if not hasattr(bot, "get_name"):
+            bot.get_name = lambda b=bot: getattr(b, "_name", b.__class__.__name__)
 
+    # Track wins
+    wins = {rc_bot.get_name(): 0, ml_bot.get_name(): 0}
+
+    # Play games
+    for i in range(n_games):
+        # Only reset bots that actually have a reset method
+        for bot in [rc_bot, ml_bot]:
+            if hasattr(bot, "reset"):
+                bot.reset()
+
+        winner, *_ = engine.play_game(rc_bot, ml_bot, rng)
+        wins[winner.get_name()] += 1
+        print(f"Game {i+1}/{n_games} winner: {winner.get_name()}")
+
+    # Print final results
+    print("\n=== Tournament Results ===")
+    for bot_name, win_count in wins.items():
+        print(f"{bot_name}: {win_count}/{n_games} wins ({win_count/n_games:.2%})")
+
+# ---------------- MAIN ----------------
 if __name__ == "__main__":
-    run_tournament(n_games=10000)
+    run_tournament(NUM_GAMES)

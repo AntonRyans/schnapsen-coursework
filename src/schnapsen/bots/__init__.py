@@ -13,7 +13,7 @@ from .minimax import MiniMaxBot
 from .bully_bot import BullyBot
 from .opp_react_bot import OppReactBot
 from .example_bot import ExampleBot
-from .risk_control_bot import riskControlBot
+from .risk_control_bot import RiskControlBot
 from .score_based_bot import ScoreBasedBot
 
 __all__ = [
