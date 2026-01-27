@@ -3,22 +3,16 @@ from pathlib import Path
 import time
 import random
 
-# -------------------------------------------------
 # Fix imports when running directly
-# -------------------------------------------------
-ROOT = Path(__file__).resolve().parents[4]  # schnapsen-coursework
+ROOT = Path(__file__).resolve().parents[4]  
 sys.path.insert(0, str(ROOT / "src"))
 
-# -------------------------------------------------
 # Imports
-# -------------------------------------------------
 from schnapsen.game import SchnapsenGamePlayEngine
 from schnapsen.bots.opp_react_bot import OppReactBot
 from schnapsen.bots.ml_bot import MLPlayingBot
 
-# -------------------------------------------------
 # Tournament function
-# -------------------------------------------------
 def run_tournament(
     n_games: int,
     bot1_class,
@@ -59,9 +53,7 @@ def run_tournament(
         if (i + 1) % max(1, n_games // 10) == 0:
             print(f"Completed {i + 1}/{n_games} games")
 
-    # -------------------------------------------------
     # Results
-    # -------------------------------------------------
     print("\n==============================")
     print("        TOURNAMENT RESULTS    ")
     print("==============================")
@@ -71,10 +63,7 @@ def run_tournament(
 
     print(f"\nTotal runtime: {(time.time() - start_time) / 60:.2f} minutes")
 
-
-# -------------------------------------------------
 # Main
-# -------------------------------------------------
 if __name__ == "__main__":
 
     model_path = ROOT / "ML_models" / "ml_vs_bully_model.joblib"
@@ -85,7 +74,7 @@ if __name__ == "__main__":
     assert model_path.exists(), f"Model not found at: {model_path}"
 
     run_tournament(
-        n_games=50000,
+        n_games=10000,
         bot1_class=OppReactBot,
         bot2_class=MLPlayingBot,
         bot1_name="OppReactBot",

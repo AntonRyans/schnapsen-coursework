@@ -1,0 +1,13 @@
+IMPORTANT INFO!
+
+1. The tournaments are under the src/schnapsen/tournaments directory.
+
+2. To run rcBotVsMLBot_tournament.py, run in powershell, the following commands:
+>> cd C:\Users\anton\Documents\GitHub\schnapsen-coursework\src [or cd <the path to the tournament folder>]
+>> python -m schnapsen.bots.tournaments.rcBotVsMLBot_tournament
+
+3. To run scoreBotVsMLBot_tournament.py, run in powershell, the following commands:
+>> cd C:\Users\anton\Documents\GitHub\schnapsen-coursework\src [or cd <the path to the tournament folder>]
+>> python -m schnapsen.bots.tournaments.scoreBotVsMLBot_tournament
+
+4. To run the oppReactBotVsMLBot tournament, just run it as usual as any other python program in python debugger.

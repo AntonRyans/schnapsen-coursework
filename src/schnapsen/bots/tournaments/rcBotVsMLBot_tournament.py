@@ -1,22 +1,13 @@
-"""
-Tournament: RiskControlBot vs MLPlayingBot
-Runs 10 games and prints results.
-"""
-
 import random
 from pathlib import Path
 from schnapsen.game import SchnapsenGamePlayEngine
 
-# ---------------- IMPORT YOUR BOTS ----------------
 from schnapsen.bots.risk_control_bot import RiskControlBot
 from schnapsen.bots.ml_bot import MLPlayingBot
-# --------------------------------------------------
 
-# ---------------- CONFIG ----------------
 SEED = 42
 NUM_GAMES = 10000
 MODEL_PATH = Path(r"C:\Users\anton\Documents\GitHub\schnapsen-coursework\ML_models\ml_vs_bully_model.joblib")
-# ---------------------------------------
 
 def run_tournament(n_games: int = NUM_GAMES) -> None:
     # Ensure ML model exists
@@ -56,6 +47,5 @@ def run_tournament(n_games: int = NUM_GAMES) -> None:
     for bot_name, win_count in wins.items():
         print(f"{bot_name}: {win_count}/{n_games} wins ({win_count/n_games:.2%})")
 
-# ---------------- MAIN ----------------
 if __name__ == "__main__":
     run_tournament(NUM_GAMES)

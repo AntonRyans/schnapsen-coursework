@@ -12,7 +12,7 @@ class ScoreBasedBot(Bot):
         moves: list[Move] = perspective.valid_moves()
         scorer = SchnapsenTrickScorer()
 
-        # --- SCORE DIFFERENCE ---
+        # SCORE DIFFERENCE 
         my_score: Score = perspective.get_my_score()
         opp_score: Score = perspective.get_opponent_score()
 
@@ -21,11 +21,11 @@ class ScoreBasedBot(Bot):
 
         score_diff = my_total - opp_total
 
-        # --- GAME STATE ---
+        # GAME STATE 
         losing = score_diff < 0
         winning = score_diff > 0
 
-        # --- RISKY STRATEGY (WHEN LOSING) ---
+        # RISKY STRATEGY (WHEN LOSING)
         if losing:
             # 1. Prefer marriages (high reward)
             for move in moves:
@@ -39,7 +39,7 @@ class ScoreBasedBot(Bot):
             )
             return best_move
 
-        # --- SAFE STRATEGY (WHEN WINNING) ---
+        # SAFE STRATEGY (WHEN WINNING)
         if winning:
             trump = perspective.get_trump_suit()
 
@@ -62,6 +62,6 @@ class ScoreBasedBot(Bot):
                 key=lambda m: scorer.rank_to_points(m.cards[0].rank)
             )
 
-        # --- NEUTRAL (TIED SCORE) ---
+        # NEUTRAL (TIED SCORE) 
         # Play middle-ground strategy
         return moves[0]
